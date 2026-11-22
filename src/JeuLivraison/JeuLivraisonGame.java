@@ -9,9 +9,11 @@ public class JeuLivraisonGame extends Game {
 
     private GamePad clavier;
     private Livreur livreur;
+    private CarteVille carte;
 
     @Override
     public void initialize() {
+        carte = new CarteVille();
         clavier = new GamePad();
         addKeyListener(clavier);
 
@@ -33,6 +35,17 @@ public class JeuLivraisonGame extends Game {
         canvas.drawRectangle(0, 0, getWidth(), getHeight(),
                 new Color(50, 120, 85));
 
+        int cameraX = Math.max(0, Math.min(
+                livreur.getX() - getWidth() / 2,
+                carte.getLargeur() - getWidth()
+        ));
+
+        int cameraY = Math.max(0, Math.min(
+                livreur.getY() - getHeight() / 2,
+                carte.getHauteur() - getHeight()
+        ));
+
+        carte.dessiner(canvas, cameraX, cameraY);
         canvas.drawRectangle(0, 0, getWidth(), 56,
                 new Color(30, 50, 60));
 
@@ -40,6 +53,12 @@ public class JeuLivraisonGame extends Game {
         canvas.drawString(20, 43,
                 "Fleches : deplacer | Echap : quitter", Color.WHITE);
 
-        livreur.draw(canvas);
+        canvas.drawRectangle(
+                livreur.getX() - cameraX,
+                livreur.getY() - cameraY,
+                livreur.getWidth(),
+                livreur.getHeight(),
+                Color.YELLOW
+        );
     }
 }

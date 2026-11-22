@@ -1,0 +1,42 @@
+package BouncingBall;
+
+import Engine.Canvas;
+
+import java.awt.*;
+
+public class Ball {
+    private int positionX = 200;
+    private int positionY = 150;
+    private int velocityX = 3;
+    private int velocityY = 1;
+    private final int DIAMETER = 50;
+    private final int maxBallWidth;
+    private final int maxBallHeight;
+
+    public Ball(int windowWidth, int windowHeight) {
+        maxBallWidth = windowWidth - DIAMETER;
+        maxBallHeight = windowHeight - DIAMETER;
+    }
+
+    public int update() {
+        positionX += velocityX;
+        positionY += velocityY;
+        int bounceCount = 0;
+
+        if (positionX >= maxBallWidth || positionX <= 0) {
+            velocityX = -velocityX;
+            bounceCount++;
+        }
+
+        if (positionY >= maxBallHeight || positionY <= 0) {
+            velocityY = -velocityY;
+            bounceCount++;
+        }
+
+        return bounceCount;
+    }
+
+    public void draw(Canvas canvas) {
+        canvas.drawCircle(positionX, positionY, DIAMETER, Color.RED);
+    }
+}

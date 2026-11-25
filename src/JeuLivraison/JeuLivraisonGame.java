@@ -5,6 +5,14 @@ import Engine.Game;
 import Engine.GamePad;
 import java.awt.Color;
 import Engine.Direction;
+import java.awt.Toolkit;
+import java.awt.AWTEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.AWTEventListener;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Window;
+import java.awt.event.MouseAdapter;
 
 public class JeuLivraisonGame extends Game {
 
@@ -14,12 +22,28 @@ public class JeuLivraisonGame extends Game {
     private Livraison livraison;
     private Chien chien;
     private Voiture[] voitures;
+    private int tempsRestant = 60;
+    private long debutLivraison;
+    private volatile boolean recommencerDemande = false;
+    private AWTEventListener souris;
 
     @Override
+
     public void initialize() {
-        carte = new CarteVille();
+
         clavier = new GamePad();
+
         addKeyListener(clavier);
+
+        for (Window fenetre : Window.getWindows()) {
+            installerSouris(fenetre);
+        }
+
+        recommencerPartie();
+    }
+
+    private void recommencerPartie() {
+        carte = new CarteVille();
 
         livreur = new Livreur(clavier,
                 carte.getLargeur(), carte.getHauteur());
@@ -52,21 +76,50 @@ public class JeuLivraisonGame extends Game {
                 new Voiture(1920, 1440, 100, 1146, 3, 4, Direction.RIGHT),
                 new Voiture(1920, 1440, 1700, 1098, 4, 5, Direction.LEFT)
         };
+
+        debutLivraison = System.nanoTime();
+        tempsRestant = 60;
+
     }
 
     @Override
     public void update() {
 
         if (clavier.isQuitPressed()) {
+
             stop();
             return;
         }
+
+        long tempsEcoule = (System.nanoTime() - debutLivraison)
+                / 1_000_000_000L;
+
+        tempsRestant = Math.max(0, 60 - (int) tempsEcoule);
+
+        if (tempsRestant == 0) {
+
+            if (recommencerDemande) {
+                recommencerDemande = false;
+                recommencerPartie();
+            }
+
+            return;
+        }
+
+        recommencerDemande = false;
 
         livreur.update();
 
         chien.poursuivre(livreur);
 
+        int ancienScore = livraison.getScore();
+
         livraison.update(livreur);
+
+        if (livraison.getScore() > ancienScore) {
+            debutLivraison = System.nanoTime();
+            tempsRestant = 60;
+        }
 
         for (Voiture voiture : voitures) {
             voiture.avancer(voitures);
@@ -115,5 +168,105 @@ public class JeuLivraisonGame extends Game {
                 "Livraisons : " + livraison.getScore(), Color.WHITE);
 
         chien.dessiner(canvas, cameraX, cameraY);
+
+        livraison.dessinerDirection(canvas, livreur);
+
+        Color couleurTemps = tempsRestant <= 10
+                ? Color.RED : new Color(255, 219, 119);
+
+        canvas.drawRectangle(345, 29, 140, 25,
+                new Color(20, 32, 40));
+
+        canvas.drawString(355, 43,
+                String.format("TEMPS  %02d:%02d",
+                        tempsRestant / 60, tempsRestant % 60),
+                couleurTemps);
+
+        canvas.drawRectangle(355, 47, 120, 4,
+                Color.GRAY);
+
+        if (tempsRestant > 0) {
+            canvas.drawRectangle(355, 47,
+                    120 * tempsRestant / 60, 4,
+                    couleurTemps);
+        }
+
+        if (tempsRestant == 0) {
+            dessinerFinPartie(canvas);
+        }
+
     }
+
+    private void dessinerFinPartie(Canvas canvas) {
+
+        int x = getWidth() / 2 - 170;
+        int y = getHeight() / 2 - 120;
+
+        Color dore = new Color(255, 219, 119);
+
+        canvas.drawRectangle(0, 0, getWidth(), getHeight(),
+                new Color(0, 0, 0, 150));
+
+        canvas.drawRectangle(x, y, 340, 240, dore);
+
+        canvas.drawRectangle(x + 2, y + 2, 336, 236,
+                new Color(32, 42, 52));
+
+        canvas.drawString(x + 95, y + 40,
+                "PARTIE TERMINEE", dore);
+
+        canvas.drawString(x + 90, y + 70,
+                "Le temps est ecoule !", Color.WHITE);
+
+        canvas.drawRectangle(x + 30, y + 90,
+                280, 2, Color.GRAY);
+
+        canvas.drawString(x + 95, y + 120,
+                "Livraisons reussies", Color.WHITE);
+
+        canvas.drawString(x + 160, y + 150,
+                "" + livraison.getScore(), dore);
+
+        canvas.drawRectangle(x + 50, y + 180,
+                240, 40, dore);
+
+        canvas.drawString(x + 110, y + 205,
+                "RECOMMENCER", Color.BLACK);
+    }
+
+    private void installerSouris(Component composant) {
+
+        for (var ecouteur : composant.getKeyListeners()) {
+
+            if (ecouteur == clavier) {
+
+                composant.addMouseListener(new MouseAdapter() {
+
+                    @Override
+                    public void mousePressed(MouseEvent clic) {
+
+                        int x = getWidth() / 2 - 120;
+                        int y = getHeight() / 2 + 60;
+
+                        if (clic.getX() >= x
+                                && clic.getX() <= x + 240
+                                && clic.getY() >= y
+                                && clic.getY() <= y + 40) {
+
+                            recommencerDemande = true;
+                        }
+                    }
+                });
+
+                return;
+            }
+        }
+
+        if (composant instanceof Container conteneur) {
+            for (Component enfant : conteneur.getComponents()) {
+                installerSouris(enfant);
+            }
+        }
+    }
+
 }

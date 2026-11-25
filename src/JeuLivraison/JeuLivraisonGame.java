@@ -23,6 +23,9 @@ public class JeuLivraisonGame extends Game {
     private Chien chien;
     private Voiture[] voitures;
     private int tempsRestant = 60;
+    private int vies = 3;
+    private boolean contactVoiture = false;
+    private boolean collisionVoiture = false;
     private long debutLivraison;
     private volatile boolean recommencerDemande = false;
     private AWTEventListener souris;
@@ -79,6 +82,9 @@ public class JeuLivraisonGame extends Game {
 
         debutLivraison = System.nanoTime();
         tempsRestant = 60;
+        vies = 3;
+        contactVoiture = false;
+        collisionVoiture = false;
 
     }
 
@@ -94,7 +100,8 @@ public class JeuLivraisonGame extends Game {
         long tempsEcoule = (System.nanoTime() - debutLivraison)
                 / 1_000_000_000L;
 
-        tempsRestant = Math.max(0, 60 - (int) tempsEcoule);
+        tempsRestant = collisionVoiture
+                ? 0 : Math.max(0, 60 - (int) tempsEcoule);
 
         if (tempsRestant == 0) {
 
@@ -108,7 +115,19 @@ public class JeuLivraisonGame extends Game {
 
         recommencerDemande = false;
 
+        int ancienX = livreur.getX();
+        int ancienY = livreur.getY();
+
         livreur.update();
+
+        if (!carte.estAccessible(
+                livreur.getX(),
+                livreur.getY(),
+                livreur.getWidth(),
+                livreur.getHeight())) {
+
+            livreur.moveTo(ancienX, ancienY);
+        }
 
         chien.poursuivre(livreur);
 
@@ -121,15 +140,26 @@ public class JeuLivraisonGame extends Game {
             tempsRestant = 60;
         }
 
+        boolean touche = false;
+
         for (Voiture voiture : voitures) {
             voiture.avancer(voitures);
 
             if (voiture.toucheLivreur(livreur)) {
-                livreur.moveTo(448, 480);
+                touche = true;
             }
-
-
         }
+
+        if (touche && !contactVoiture) {
+            vies--;
+
+            if (vies == 0) {
+                collisionVoiture = true;
+                tempsRestant = 0;
+            }
+        }
+
+        contactVoiture = touche;
     }
 
     @Override
@@ -189,6 +219,14 @@ public class JeuLivraisonGame extends Game {
             canvas.drawRectangle(355, 47,
                     120 * tempsRestant / 60, 4,
                     couleurTemps);
+        }
+
+
+        canvas.drawString(550, 20, "VIES", Color.WHITE);
+
+        for (int i = 0; i < 3; i++) {
+            canvas.drawString(550 + i * 25, 43,
+                    "♥", i < vies ? Color.RED : Color.GRAY);
         }
 
         if (tempsRestant == 0) {

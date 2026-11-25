@@ -7,24 +7,34 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.awt.Graphics2D;
+import Engine.Direction;
+import java.awt.Rectangle;
 
 public class Voiture extends MovableActor {
 
     private BufferedImage image;
     private int hauteurCarte;
-    private boolean descend;
+    private Direction sens;
+    private int largeurCarte;
+    private int vitesseVoiture;
 
     public Voiture(int largeur, int hauteur,
                    int x, int y, int vitesse,
-                   int modele, boolean descend) {
+                   int modele, Direction sens) {
 
         super(largeur, hauteur);
 
-        this.descend = descend;
+        this.sens = sens;
+        this.largeurCarte = largeur;
+        this.vitesseVoiture = vitesse;
 
         hauteurCarte = hauteur;
 
-        setDimensions(32, 32);
+        boolean horizontal = sens == Direction.LEFT
+                || sens == Direction.RIGHT;
+
+        setDimensions(horizontal ? 55 : 28,
+                horizontal ? 28 : 55);
         setSpeed(vitesse);
         moveTo(x, y);
 
@@ -37,42 +47,90 @@ public class Voiture extends MovableActor {
                     (modele / 3) * 64 + 4,
                     28, 55);
 
-            if (descend) {
-                BufferedImage rotation = new BufferedImage(
-                        28, 55, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage rotation = new BufferedImage(
+                    getWidth(), getHeight(),
+                    BufferedImage.TYPE_INT_ARGB);
 
-                Graphics2D g = rotation.createGraphics();
-                g.translate(28, 55);
-                g.rotate(Math.PI);
-                g.drawImage(image, 0, 0, null);
-                g.dispose();
+            Graphics2D g = rotation.createGraphics();
 
-                image = rotation;
+            switch (sens) {
+                case DOWN -> {
+                    g.translate(28, 55);
+                    g.rotate(Math.PI);
+                }
+                case RIGHT -> {
+                    g.translate(55, 0);
+                    g.rotate(Math.PI / 2);
+                }
+                case LEFT -> {
+                    g.translate(0, 28);
+                    g.rotate(-Math.PI / 2);
+                }
+                case UP -> {}
             }
+
+            g.drawImage(image, 0, 0, null);
+            g.dispose();
+
+            image = rotation;
 
         } catch (IOException e) {
             throw new RuntimeException("Image voiture introuvable", e);
         }
     }
 
-    @Override
+    public void avancer(Voiture[] voitures) {
 
-    public void update() {
-        super.update();
+        int x = getX();
+        int y = getY();
 
-        if (descend) {
-            if (getY() >= hauteurCarte - getHeight()) {
-                moveTo(getX(), 0);
-            } else {
-                moveDown();
+        switch (sens) {
+            case UP -> y -= vitesseVoiture;
+            case DOWN -> y += vitesseVoiture;
+            case LEFT -> x -= vitesseVoiture;
+            case RIGHT -> x += vitesseVoiture;
+        }
+
+        if (x < 0) x = largeurCarte - getWidth();
+        if (x > largeurCarte - getWidth()) x = 0;
+
+        if (y < 0) y = hauteurCarte - getHeight();
+        if (y > hauteurCarte - getHeight()) y = 0;
+
+        Rectangle prochaine = new Rectangle(
+                x, y, getWidth(), getHeight());
+
+        Rectangle actuelle = new Rectangle(
+                getX(), getY(), getWidth(), getHeight());
+
+        for (Voiture autre : voitures) {
+
+            if (autre == this) continue;
+
+            Rectangle positionAutre = new Rectangle(
+                    autre.getX(), autre.getY(),
+                    autre.getWidth(), autre.getHeight());
+
+            if (prochaine.intersects(positionAutre)) {
+                return;
             }
-        } else {
-            if (getY() <= 0) {
-                moveTo(getX(), hauteurCarte - getHeight());
-            } else {
-                moveUp();
+
+            for (int rx = 416; rx <= 1440; rx += 512) {
+                for (int ry = 320; ry <= 1088; ry += 384) {
+
+                    Rectangle carrefour = new Rectangle(
+                            rx, ry, 96, 96);
+
+                    if (prochaine.intersects(carrefour)
+                            && !actuelle.intersects(carrefour)
+                            && positionAutre.intersects(carrefour)) {
+                        return;
+                    }
+                }
             }
         }
+
+        moveTo(x, y);
     }
 
     @Override

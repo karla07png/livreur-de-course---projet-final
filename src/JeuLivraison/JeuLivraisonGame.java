@@ -4,6 +4,7 @@ import Engine.Canvas;
 import Engine.Game;
 import Engine.GamePad;
 import java.awt.Color;
+import Engine.Direction;
 
 public class JeuLivraisonGame extends Game {
 
@@ -29,23 +30,27 @@ public class JeuLivraisonGame extends Game {
 
         voitures = new Voiture[] {
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        426, 100, 3, 0, true),
+                // voitures V
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        474, 900, 4, 1, false),
+                new Voiture(1920, 1440, 426, 100, 3, 0, Direction.DOWN),
+                new Voiture(1920, 1440, 474, 900, 4, 1, Direction.UP),
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        938, 352, 3, 2, true),
+                new Voiture(1920, 1440, 938, 500, 3, 2, Direction.DOWN),
+                new Voiture(1920, 1440, 986, 900, 4, 3, Direction.UP),
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        986, 736, 4, 3, false),
+                new Voiture(1920, 1440, 1450, 600, 3, 4, Direction.DOWN),
+                new Voiture(1920, 1440, 1498, 1250, 4, 5, Direction.UP),
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        1450, 500, 3, 4, true),
+                // voitures H
 
-                new Voiture(carte.getLargeur(), carte.getHauteur(),
-                        1498, 1120, 4, 5, false)
+                new Voiture(1920, 1440, 100, 378, 3, 0, Direction.RIGHT),
+                new Voiture(1920, 1440, 1700, 330, 4, 1, Direction.LEFT),
+
+                new Voiture(1920, 1440, 100, 762, 3, 2, Direction.RIGHT),
+                new Voiture(1920, 1440, 1700, 714, 4, 3, Direction.LEFT),
+
+                new Voiture(1920, 1440, 100, 1146, 3, 4, Direction.RIGHT),
+                new Voiture(1920, 1440, 1700, 1098, 4, 5, Direction.LEFT)
         };
     }
 
@@ -64,7 +69,7 @@ public class JeuLivraisonGame extends Game {
         livraison.update(livreur);
 
         for (Voiture voiture : voitures) {
-            voiture.update();
+            voiture.avancer(voitures);
 
             if (voiture.toucheLivreur(livreur)) {
                 livreur.moveTo(448, 480);

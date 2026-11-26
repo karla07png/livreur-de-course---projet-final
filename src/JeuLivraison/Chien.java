@@ -80,4 +80,35 @@ public class Chien extends MovableActor {
                 getX() - cameraX,
                 getY() - cameraY);
     }
+
+    public boolean toucheLivreur(Livreur livreur) {
+        return getX() + 16 < livreur.getX() + livreur.getWidth()
+                && getX() + getWidth() - 16 > livreur.getX()
+                && getY() + 16 < livreur.getY() + livreur.getHeight()
+                && getY() + getHeight() - 16 > livreur.getY();
+    }
+
+    public void reapparaitre(CarteVille carte, Livreur livreur) {
+
+        for (int i = 0; i < 100; i++) {
+
+            int x = (int) (Math.random()
+                    * (carte.getLargeur() - getWidth() + 1));
+
+            int y = (int) (Math.random()
+                    * (carte.getHauteur() - getHeight() + 1));
+
+            double distance = Math.hypot(
+                    x - livreur.getX(),
+                    y - livreur.getY());
+
+            if (distance >= 450
+                    && carte.estAccessible(x, y, getWidth(), getHeight())
+                    && carte.estAccessible(x + 32, y + 32)) {
+
+                moveTo(x, y);
+                return;
+            }
+        }
+    }
 }

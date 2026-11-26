@@ -21,7 +21,7 @@ public class Livreur extends ControllableActor {
 
         setDimensions(32, 64);
         setSpeed(4);
-        moveTo(largeur / 2 - 16, hauteur / 2 - 32);
+        moveTo(896, 604);
 
 
         setDirection(Direction.DOWN);
@@ -76,5 +76,13 @@ public class Livreur extends ControllableActor {
         canvas.drawImage(pose,
                 getX() - cameraX,
                 getY() - cameraY);
+    }
+
+    public void adapterVitesse(boolean surPelouse) {
+        if (surPelouse) {
+            setSpeed(2);
+        } else {
+            setSpeed(4);
+        }
     }
 }

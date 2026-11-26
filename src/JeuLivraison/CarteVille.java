@@ -88,15 +88,24 @@ public class CarteVille {
             return false;
         }
 
-        for (int px = x / 32 * 32; px < x + largeur; px += 32) {
-            for (int py = y / 32 * 32; py < y + hauteur; py += 32) {
-                if (!estAccessible(px, py)) {
-                    return false;
-                }
-            }
+        int gauche = x + largeur / 2 - 3;
+        int droite = x + largeur / 2 + 3;
+        int bas = y + hauteur - 1;
+        int haut = bas - 4;
+
+        return estAccessible(gauche, haut)
+                && estAccessible(droite, haut)
+                && estAccessible(gauche, bas)
+                && estAccessible(droite, bas);
+
+    }
+
+    public boolean estPelouse(int x, int y) {
+        if (x < 0 || y < 0 || x >= getLargeur() || y >= getHauteur()) {
+            return false;
         }
 
-        return true;
+        return (image.getRGB(x, y) & 0xFFFFFF) == 0x85B978;
     }
 
 }

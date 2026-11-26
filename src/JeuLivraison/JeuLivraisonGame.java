@@ -23,9 +23,11 @@ public class JeuLivraisonGame extends Game {
     private Chien chien;
     private Voiture[] voitures;
     private int tempsRestant = 60;
-    private int vies = 3;
     private boolean contactVoiture = false;
-    private boolean collisionVoiture = false;
+    private boolean contactChien = false;
+    private long dernierChoc;
+    private long derniereMorsure;
+    private String messageChoc = "";
     private long debutLivraison;
     private volatile boolean recommencerDemande = false;
     private AWTEventListener souris;
@@ -82,9 +84,12 @@ public class JeuLivraisonGame extends Game {
 
         debutLivraison = System.nanoTime();
         tempsRestant = 60;
-        vies = 3;
+        contactChien = false;
+        dernierChoc = debutLivraison - 3_000_000_000L;
+        derniereMorsure = debutLivraison - 3_000_000_000L;
+        messageChoc = "";
         contactVoiture = false;
-        collisionVoiture = false;
+
 
     }
 
@@ -100,8 +105,7 @@ public class JeuLivraisonGame extends Game {
         long tempsEcoule = (System.nanoTime() - debutLivraison)
                 / 1_000_000_000L;
 
-        tempsRestant = collisionVoiture
-                ? 0 : Math.max(0, 60 - (int) tempsEcoule);
+        tempsRestant = Math.max(0, 60 - (int) tempsEcoule);
 
         if (tempsRestant == 0) {
 
@@ -117,6 +121,11 @@ public class JeuLivraisonGame extends Game {
 
         int ancienX = livreur.getX();
         int ancienY = livreur.getY();
+
+        livreur.adapterVitesse(carte.estPelouse(
+                livreur.getX() + livreur.getWidth() / 2,
+                livreur.getY() + livreur.getHeight() - 1
+        ) || System.nanoTime() - derniereMorsure < 3_000_000_000L);
 
         livreur.update();
 
@@ -150,16 +159,35 @@ public class JeuLivraisonGame extends Game {
             }
         }
 
-        if (touche && !contactVoiture) {
-            vies--;
+        boolean morsure = chien.toucheLivreur(livreur);
+        long maintenant = System.nanoTime();
+        int penalite = 0;
 
-            if (vies == 0) {
-                collisionVoiture = true;
-                tempsRestant = 0;
+        if (maintenant - dernierChoc >= 2_000_000_000L) {
+
+            if (touche && !contactVoiture) {
+                penalite = 10;
+                messageChoc = "ACCIDENT : -10 secondes";
+
+            } else if (morsure && !contactChien) {
+                penalite = 5;
+                messageChoc = "MORSURE : -5 secondes";
+                derniereMorsure = maintenant;
+            }
+
+            if (penalite > 0) {
+                debutLivraison -= penalite * 1_000_000_000L;
+                tempsRestant = Math.max(0, tempsRestant - penalite);
+                dernierChoc = maintenant;
             }
         }
 
+        if (morsure && !contactChien) {
+            chien.reapparaitre(carte, livreur);
+        }
+
         contactVoiture = touche;
+        contactChien = morsure;
     }
 
     @Override
@@ -224,14 +252,26 @@ public class JeuLivraisonGame extends Game {
 
         canvas.drawString(550, 20, "VIES", Color.WHITE);
 
-        for (int i = 0; i < 3; i++) {
-            canvas.drawString(550 + i * 25, 43,
-                    "♥", i < vies ? Color.RED : Color.GRAY);
+        if (System.nanoTime() - dernierChoc < 2_000_000_000L) {
+            int x = getWidth() / 2 - 140;
+
+            canvas.drawRectangle(x, 75, 280, 65,
+                    new Color(180, 35, 35));
+
+            canvas.drawRectangle(x + 3, 78, 274, 59,
+                    new Color(65, 20, 20));
+
+            canvas.drawString(x + 20, 100,
+                    "PENALITE DE TEMPS", Color.WHITE);
+
+            canvas.drawString(x + 20, 125,
+                    messageChoc, new Color(255, 210, 100));
         }
 
         if (tempsRestant == 0) {
             dessinerFinPartie(canvas);
         }
+
 
     }
 

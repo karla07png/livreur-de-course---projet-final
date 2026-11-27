@@ -111,4 +111,17 @@ public class Chien extends MovableActor {
             }
         }
     }
+    public boolean estProche(Livreur livreur) {
+        double distance = Math.hypot(
+                getX() - livreur.getX(),
+                getY() - livreur.getY()
+        );
+
+        return distance <= 75;
+    }
+
+    public void dessinerImmobile(Canvas canvas, int x, int y) {
+        BufferedImage pose = repos.getSubimage(0, 192, 64, 64);
+        canvas.drawImage(pose, x, y);
+    }
 }

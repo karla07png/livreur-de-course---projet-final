@@ -108,4 +108,27 @@ public class CarteVille {
         return (image.getRGB(x, y) & 0xFFFFFF) == 0x85B978;
     }
 
+
+    public int[] trouverCage(Livreur livreur) {
+
+        int[][] cages = {
+                {288, 160}, {1248, 160},
+                {1792, 544}, {288, 960},
+                {1248, 1312}, {1792, 1312}
+        };
+
+        for (int[] cage : cages) {
+            double distance = Math.hypot(
+                    livreur.getX() + livreur.getWidth() / 2 - (cage[0] + 16),
+                    livreur.getY() + livreur.getHeight() - (cage[1] + 16)
+            );
+
+            if (distance <= 60) {
+                return cage;
+            }
+        }
+
+        return null;
+    }
+
 }

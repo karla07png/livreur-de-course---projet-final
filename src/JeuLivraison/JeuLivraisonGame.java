@@ -31,6 +31,9 @@ public class JeuLivraisonGame extends Game {
     private long debutLivraison;
     private volatile boolean recommencerDemande = false;
     private AWTEventListener souris;
+    private boolean chienCapture = false;
+    private boolean chienEnCage = false;
+    private boolean toucheEAppuyee = false;
 
     @Override
 
@@ -49,6 +52,7 @@ public class JeuLivraisonGame extends Game {
 
     private void recommencerPartie() {
         carte = new CarteVille();
+        chienEnCage = false;
 
         livreur = new Livreur(clavier,
                 carte.getLargeur(), carte.getHauteur());
@@ -138,7 +142,27 @@ public class JeuLivraisonGame extends Game {
             livreur.moveTo(ancienX, ancienY);
         }
 
-        chien.poursuivre(livreur);
+        boolean appuiE = clavier.isCapturePressed();
+
+        if (appuiE && !toucheEAppuyee) {
+
+            int[] cage = carte.trouverCage(livreur);
+
+            if (chienCapture && cage != null) {
+                chienCapture = false;
+                chienEnCage = true;
+                chien.moveTo(cage[0] - 16, cage[1] - 40);
+            } else if (!chienCapture && !chienEnCage
+                    && chien.estProche(livreur)) {
+                chienCapture = true;
+            }
+        }
+
+        toucheEAppuyee = appuiE;
+
+        if (!chienCapture && !chienEnCage) {
+            chien.poursuivre(livreur);
+        }
 
         int ancienScore = livraison.getScore();
 
@@ -147,6 +171,11 @@ public class JeuLivraisonGame extends Game {
         if (livraison.getScore() > ancienScore) {
             debutLivraison = System.nanoTime();
             tempsRestant = 60;
+
+            if (chienEnCage) {
+                chienEnCage = false;
+                chien.reapparaitre(carte, livreur);
+            }
         }
 
         boolean touche = false;
@@ -159,7 +188,8 @@ public class JeuLivraisonGame extends Game {
             }
         }
 
-        boolean morsure = chien.toucheLivreur(livreur);
+        boolean morsure = !chienCapture && !chienEnCage
+                && chien.toucheLivreur(livreur);
         long maintenant = System.nanoTime();
         int penalite = 0;
 
@@ -225,7 +255,19 @@ public class JeuLivraisonGame extends Game {
         canvas.drawString(350, 24,
                 "Livraisons : " + livraison.getScore(), Color.WHITE);
 
-        chien.dessiner(canvas, cameraX, cameraY);
+        if (chienEnCage) {
+            chien.dessinerImmobile(canvas,
+                    chien.getX() - cameraX,
+                    chien.getY() - cameraY);
+
+        } else if (chienCapture) {
+            chien.dessinerImmobile(canvas,
+                    livreur.getX() + livreur.getWidth() - 16 - cameraX,
+                    livreur.getY() + livreur.getHeight() - 64 - cameraY);
+
+        } else {
+            chien.dessiner(canvas, cameraX, cameraY);
+        }
 
         livraison.dessinerDirection(canvas, livreur);
 

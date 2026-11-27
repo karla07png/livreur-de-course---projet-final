@@ -79,7 +79,7 @@ public class Voiture extends MovableActor {
         }
     }
 
-    public void avancer(Voiture[] voitures) {
+    public void avancer(Voiture[] voitures, Chien chien) {
 
         int x = getX();
         int y = getY();
@@ -99,6 +99,19 @@ public class Voiture extends MovableActor {
 
         Rectangle prochaine = new Rectangle(
                 x, y, getWidth(), getHeight());
+
+        if (chien != null && chien.estSurRoute()) {
+            Rectangle zoneChien = new Rectangle(
+                    chien.getX() + 16,
+                    chien.getY() + 16,
+                    32, 32
+            );
+
+            if (prochaine.intersects(zoneChien)) {
+                return;
+            }
+        }
+
 
         Rectangle actuelle = new Rectangle(
                 getX(), getY(), getWidth(), getHeight());

@@ -161,7 +161,7 @@ public class JeuLivraisonGame extends Game {
         toucheEAppuyee = appuiE;
 
         if (!chienCapture && !chienEnCage) {
-            chien.poursuivre(livreur);
+            chien.poursuivre(livreur, carte,voitures);
         }
 
         int ancienScore = livraison.getScore();
@@ -181,7 +181,7 @@ public class JeuLivraisonGame extends Game {
         boolean touche = false;
 
         for (Voiture voiture : voitures) {
-            voiture.avancer(voitures);
+            voiture.avancer(voitures,!chienCapture && !chienEnCage ? chien : null);;
 
             if (voiture.toucheLivreur(livreur)) {
                 touche = true;
